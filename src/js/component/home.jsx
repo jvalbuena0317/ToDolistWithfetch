@@ -18,73 +18,99 @@ const endpoint = "https://playground.4geeks.com/apis/fake/todos/user/jvalbuena";
 
 //Hook de react: Herramientas de reavct- nos permite crear una variable que puede ser comidifica con un click o un input 
 const Home = () => {
-
-
-
 	// EL VALOR QUE VAMOS A MOSTRAR: newToDo, y la funcion para modificar ese valor: setNewToDo
 	//variable, funcion(modifica la variable)
 	// const [state, setState] = useState(valorInicial)
-	const [newToDo, setNewToDo] = useState("")  // ESTE MANEJA LA DINAMICA DE LAS NUEVAS TAREAS 
-	const [toDos, setToDos] = useState([""]) // ESTE MANEJA LA LISTA DE TAREAS 
-
-
+	const [newToDo, setNewToDo] = useState("")  // ESTE MANEJA LA DINAMICA DE LAS NUEVAS TAREAS
+	const [toDos, setToDos] = useState([""]) // ESTE MANEJA LA LISTA DE TAREAS
 	const getApiToDos = async () => {
-		const response = await fetch(endpoint)
-		const toDo = await response.json()
-		//console.log(toDo)
-		setToDos(toDo)
-
+		try {
+			//traer tareas
+			const response = await fetch(endpoint)
+			if (response.ok) {
+				const toDo = await response.json()
+				//console.log(toDo)
+				setToDos(toDo)
+			} else {
+				createUser()
+			}
+		} catch (error) {
+			console.log(error)
+		}
 	};
-
+	const createUser = async () => {
+		try {
+			let response = await fetch(endpoint, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify([])
+			})
+			if (response.ok) {
+				getApiToDos()
+			}
+		} catch (error) {
+			console.log(error)
+		}
+	}
 	const createToDo = async () => {
-		const response = await fetch(endpoint, {
-			method: "POST",
-			body: JSON.stringify({ label: newToDo }),
-			headers: {
-				"Content-Type": "application/json",
-			},
-
-		});
-
+		try {
+			const response = await fetch(endpoint, {
+				method: "PUT",
+				body: JSON.stringify([...toDos, { label: newToDo, done: false }]),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (response.ok) {
+				setNewToDo("")
+				getApiToDos()
+			}
+		} catch (error) {
+			console.log(error)
+		}
 	};
-
 	const deleteTaskList = async () => {
 		const response = await fetch(endpoint, {
 			method: "DELETE",
 		});
 		console.log(response);
 	};
-
-
-	const deleteToDo = (index) => {
-		// todos los elementos menos el que tenga el indice que recibio 
+	const deleteToDo = async (index) => {
+		// todos los elementos menos el que tenga el indice que recibio
 		const newList = toDos.filter((todo, i) => i !== index)
-		setToDos(newList)
-
+		try {
+			const response = await fetch(endpoint, {
+				method: "PUT",
+				body: JSON.stringify(newList),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			if (response.ok) {
+				getApiToDos()
+			}
+		} catch (error) {
+			console.log(error)
+		}
 	};
-
 	//const handleClick = () => {
 	// setToDos es mi lista de tareas. el ... son las tareas antriores mas la nueva tarea que se va poner con el newToDo
 	// spread operator ...laLista, nuevoTodo
 	//setToDos([...toDos, newToDo])
 	//}
-
 	const handleClick = (e) => {
-		setToDos([...toDos, { label: newToDo }])
-		e.preventDefault();
-		setNewToDo("");
+		// setToDos([...toDos, { label: newToDo }])
+		// e.preventDefault();
+		// setNewToDo("");
 	}
-
 	const handleChange = (e) => {
 		setNewToDo(e.target.value)   // modifica el valor del nuevo todo y lo hago dinamico al agregar el setNewToDo
-
 	}
-
 	useEffect(() => {
 		getApiToDos()
 	}, [])
-
-
 	return (
 		<div classname="mytodo">
 			<div className="text-center">
@@ -92,22 +118,20 @@ const Home = () => {
 				<div>
 					<div classname="container">
 						<input type="text" value={newToDo} onChange={handleChange} className="p-1"></input>
-						<button onClick={handleClick} className="btn btn-primary mx-1">
+						<button onClick={() => createToDo()} className="btn btn-primary mx-1">
 							Add to Do
 						</button>
 					</div>
 					<div className="m-3">
 						<p>New To Do {newToDo}</p></div>
-
 					<div className="d-flex align-items-center justify-content-center">
 						<ul className="list-group d-flex justify-content-between">
 							{toDos.map((todo, index) => {
 								return (
 									<li className={`list-group-item ${index % 2 === 0 ? "bg-light" : ""}`}>
-										{todo.label} <butoon onClick={() => { deleteToDo(index) }}>
+										{todo.label} <butoon onClick={() => deleteToDo(index)}>
 											<i class="fas fa-trash"></i></butoon>
 									</li>
-
 								)
 							})}
 						</ul>
@@ -117,6 +141,8 @@ const Home = () => {
 		</div>
 	);
 };
+
+
 
 
 export default Home;
